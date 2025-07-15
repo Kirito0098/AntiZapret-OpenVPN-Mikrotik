@@ -49,9 +49,9 @@
 
 ---
 
-**💡 Пример: Загрузка и импорт сертификатов через WinBox**
+**💡 Пример: Загрузка сертификатов в Files**
 
-![Загрузка сертификатов в Files](https://private-user-images.githubusercontent.com/58187639/466618642-d254604a-05b7-4267-8e03-7520a855c037.png)
+![Загрузка сертификатов в Files](WinBox_O7tKKLxq7T)
 *Files → Upload и System → Certificates → Import*
 
 ---
@@ -99,9 +99,9 @@
 
 ---
 
-**💡 Пример: Создание PPP-профиля и добавление скриптов**
+**💡 Пример: PPP Profiles и On Up/On Down**
 
-![PPP Profiles и On Up/On Down](https://private-user-images.githubusercontent.com/58187639/466618644-05d1862f-ce70-42a8-99ef-4d33e8c3cab8.png)
+![PPP Profiles и On Up/On Down](WinBox_NlGBITlPFB)
 *PPP → Profiles → Add и вкладки On Up/On Down*
 
 ---
@@ -141,9 +141,9 @@
 
 ---
 
-**💡 Пример: Добавление OpenVPN-клиента**
+**💡 Пример: OVPN Client Add**
 
-![OVPN Client Add](https://private-user-images.githubusercontent.com/58187639/466618645-196956aa-e098-4299-b241-bea19f1472dc.png)
+![OVPN Client Add](WinBox_wfWeU2MNUz/)
 *Interfaces → OVPN Client → Add*
 
 ---
@@ -159,9 +159,9 @@
 
 ---
 
-**💡 Пример: Включение Allow Remote Requests**
+**💡 Пример: DNS Allow Remote Requests**
 
-![DNS Allow Remote Requests](https://private-user-images.githubusercontent.com/58187639/466618641-312e50e6-3a2c-4c86-abaf-7c2e951ab44b.png)
+![DNS Allow Remote Requests](WinBox_hLyiGo2JIy)
 *IP → DNS*
 
 ---
@@ -181,9 +181,9 @@
 
 ---
 
-**💡 Пример: Добавление DHCP Client**
+**💡 Пример: DHCP Client Add**
 
-![DHCP Client Add](https://private-user-images.githubusercontent.com/58187639/466618643-d24ff7ec-3d85-4be8-a111-d217535e5e4a.png)
+![DHCP Client Add](WinBox_WfS4CCVDPU)
 *IP → DHCP Client → Add*
 
 ---
@@ -208,7 +208,7 @@
 
 **💡 Пример: Проверка статуса OVPN Client**
 
-![Статус OVPN Client](https://private-user-images.githubusercontent.com/58187639/466618645-196956aa-e098-4299-b241-bea19f1472dc.png)
+![Статус OVPN Client](WinBox_wfWeU2MNUz/)
 *Interfaces → OVPN Client (столбец Status)*
 
 ---
