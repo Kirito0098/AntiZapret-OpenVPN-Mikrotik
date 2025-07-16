@@ -76,47 +76,88 @@
 
 ## 2️⃣ Настройка PPP-профиля
 
-PPP-профиль определяет, как будет работать VPN-соединение: какие параметры безопасности, скрипты и маршруты будут применяться.
+PPP-профиль определяет параметры работы VPN-соединения: безопасность, скрипты, маршруты.
+
+### Для случая с **единственным VPN-туннелем (например, только AntiZapret)**
+
+Если MikroTik используется только для одного VPN (AZ), правило Redirect to Router для DNS в On Up не требуется — достаточно прописать нужный DNS.
 
 1. Создайте профиль, например, `VPN_PROFILE`:
-    - **WinBox**:  
-      Перейдите в **PPP → Profiles**, нажмите **Add (+)**, задайте имя профиля, остальные параметры можно оставить по умолчанию или настроить по необходимости.
-    - **Терминал**:
-      ```bash
-      /ppp profile add name=VPN_PROFILE use-ipv6=yes use-mpls=default use-compression=default use-encryption=default only-one=default change-tcp-mss=default use-upnp=default
-      ```
-2. Добавьте скрипты для DNS и NAT:
-    - **WinBox**:  
-      Откройте созданный профиль, перейдите во вкладки **On Up** и **On Down**. Вставьте скрипты:
-      ```
-      on-up
-      /ip dns cache flush;
-      /ip firewall nat add action=redirect chain=dstnat src-address=*ВАША_ЛОКАЛЬНАЯ_СЕТЬ*/24 comment="Redirect to Router" dst-port=53,5353,1253 protocol=udp;
-      /ip dns set servers=""
-      on-down
-      /ip dns cache flush;
-      /ip firewall nat remove [find comment="Redirect to Router"];
-      /ip dns set servers=*DNS_ПРОВАЙДЕРА*
-      ```
-      - **on-up** — выполняется при подключении VPN. Очищает кэш DNS, перенаправляет DNS-запросы на роутер, сбрасывает DNS-серверы.
-      - **on-down** — выполняется при отключении VPN. Очищает кэш DNS, удаляет правило NAT, возвращает DNS-серверы провайдера.
-    - **Терминал**:
-      ```bash
-      /ppp profile set VPN_PROFILE on-up="/ip dns cache flush;\n/ip firewall nat add action=redirect chain=dstnat src-address='*ВАША_ЛОКАЛЬНАЯ_СЕТЬ*'/24 comment=\"Redirect to Router\" dst-port=53,5353,1253 protocol=udp;\n/ip dns set servers=\"\""
-      /ppp profile set VPN_PROFILE on-down="/ip dns cache flush;\n/ip firewall nat remove [find comment=\"Redirect to Router\"];\n/ip dns set servers='*DNS_ПРОВАЙДЕРА*'"
-      ```
+  - **WinBox**:  
+    PPP → Profiles → Add (+), задайте имя, остальные параметры — по необходимости.
+  - **Терминал**:
+    ```bash
+    /ppp profile add name=VPN_PROFILE use-ipv6=yes use-mpls=default use-compression=default use-encryption=default only-one=default change-tcp-mss=default use-upnp=default
+    ```
+
+2. Добавьте скрипты для DNS:
+
+  - **WinBox**:  
+    В профиле, вкладки **On Up** и **On Down**:
+    ```shell
+    on-up
+    /ip dns cache flush;
+    /ip dns set servers=""
+    on-down
+    /ip dns cache flush;
+    /ip dns set servers=*DNS_ПРОВАЙДЕРА*
+    ```
+  - **Терминал**:
+    ```bash
+    /ppp profile set VPN_PROFILE on-up="/ip dns cache flush;\n/ip dns set servers="""
+    /ppp profile set VPN_PROFILE on-down="/ip dns cache flush;\n/ip dns set servers='*DNS_ПРОВАЙДЕРА*'"
+    ```
+
+  > Замените `*DNS_ПРОВАЙДЕРА*` на ваши значение.
+
+---
+
+### Для случая с **несколькими VPN-туннелями или сложной маршрутизацией**
+
+Если на роутере есть другие VPN или требуется гибкое управление трафиком, используйте правило Redirect to Router и формирование списка через Mangle.
+
+1. В профиле добавьте скрипты:
+
+  - **WinBox**:  
+    Вкладки **On Up** и **On Down**:
+    ```shell
+    on-up
+    /ip dns cache flush;
+    /ip firewall nat add action=redirect chain=dstnat src-address-list="RedirectDNS" comment="Redirect to Router" dst-port=53,5353,1253 protocol=udp;
+    /ip dns set servers=""
+    on-down
+    /ip dns cache flush;
+    /ip firewall nat remove [find comment="Redirect to Router"];
+    /ip dns set servers=*DNS_ПРОВАЙДЕРА*
+    ```
+  - **Терминал**:
+    ```bash
+    /ppp profile set VPN_PROFILE on-up="/ip dns cache flush;\n/ip firewall nat add action=redirect chain=dstnat src-address-list='RedirectDNS' comment=\"Redirect to Router\" dst-port=53,5353,1253 protocol=udp;\n/ip dns set servers=\"\""
+    /ppp profile set VPN_PROFILE on-down="/ip dns cache flush;\n/ip firewall nat remove [find comment=\"Redirect to Router\"];\n/ip dns set servers='*DNS_ПРОВАЙДЕРА*'"
+    ```
+
+2. Добавьте правило Mangle для формирования списка адресов:
+  ```bash
+  /ip firewall mangle add chain=postrouting src-address=*ВАША_ЛОКАЛЬНАЯ_СЕТЬ*/24 action=add-src-to-address-list address-list=RedirectDNS address-list-timeout=60s out-interface=ovpn-out1
+  ```
+  - **WinBox**:  
+    IP → Firewall → Mangle → Add (+), заполните поля как в инструкции выше.
+
+  > Это позволит гибко управлять DNS-трафиком при наличии нескольких VPN.
+
+---
+
+> ⚡ **Совет:**  
+> Определяйте и маркируйте управляемый трафик через адрес-листы или метки — это упростит настройку и дальнейшие изменения.
 
 > **Как узнать параметры:**
-> - *ВАША_ЛОКАЛЬНАЯ_СЕТЬ* — это адрес вашей локальной сети, например, 192.168.88.0.  
->   - **Консоль:** `/ip address print` — ищите строку с вашим локальным интерфейсом.
->   - **WinBox:** IP → Addresses → поле "Address" для нужного интерфейса.
-> - *DNS_ПРОВАЙДЕРА* — DNS-серверы, которые выдает ваш провайдер.  
->   - **Консоль:** `/ip dhcp-client print detail` — ищите строку "dns-server".
->   - **WinBox:** IP → DHCP Client → выберите активный клиент → поле "DNS".
+> - *DNS_ПРОВАЙДЕРА* — DNS от провайдера (`/ip dhcp-client print detail`).
+> - *ВАША_ЛОКАЛЬНАЯ_СЕТЬ* — адрес вашей сети (`/ip address print`).
 
 > **Описание:**
-> - `on-up`: очищает кэш DNS, добавляет правило NAT для перенаправления DNS-запросов, сбрасывает DNS-серверы.
-> - `on-down`: очищает кэш DNS, удаляет правило NAT, возвращает DNS-серверы провайдера.
+> - `on-up`: очищает кэш DNS, при необходимости добавляет правило NAT для перенаправления DNS, либо просто прописывает нужный DNS.
+> - `on-down`: очищает кэш DNS, удаляет правило NAT (если было), возвращает DNS провайдера.
+
 
 ---
 
