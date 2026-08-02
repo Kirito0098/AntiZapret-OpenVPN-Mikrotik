@@ -138,17 +138,19 @@ DNS AntiZapret приходит с OVPN (`use-peer-dns=yes` на клиенте)
 | Connect To | хост из `remote` |
 | Port | из `.ovpn` (часто **50443**) |
 | Mode | ip |
-| Protocol | **udp** (предпочтительно) или tcp |
-| User / Password | из `.ovpn` |
-| Profile | `VPN_PROFILE` |
-| Certificate | имя после Import |
+| Protocol | **udp** (предпочтительно) или **tcp** (тоже рабочий вариант) |
+| User / Password | из `.ovpn` (часто `user` + пароль) |
+| Profile | `AZ_VPN` (или своё имя) |
+| Certificate | имя после Import (например `cert_ovpn-import…`) |
 | Verify Server Certificate | yes |
 | TLS Version | any |
-| Auth | часто `null` при GCM |
+| Auth | `null` |
 | Cipher | `aes128-gcm` |
 | Use Peer DNS | **yes** |
 | Add Default Route | **no** |
-| Route No Pull | **no** (тянуть маршруты AntiZapret) |
+| Route No Pull | **no** (галочка Don't Add Pushed Routes снята) |
+
+Рабочий эталон Dial Out: Port **50443**, Protocol **tcp**, Auth **null**, Cipher **aes 128 gcm**, Peer DNS **yes**, Default Route off → Status **connected / RUNNING**.
 
 ```mikrotik
 /interface ovpn-client add name=ovpn-out1 connect-to=vpn.example.com port=50443 mode=ip \
