@@ -12,7 +12,7 @@
 # DNS: UDP *.29.0.1 · TCP *.29.4.1 (схемы 10… или 172…)
 # Маршруты пушатся сервером — route-nopull=no; после doall.sh — reconnect
 # Патч UDP для MikroTik: /root/antizapret/patch-openvpn.sh 2  (Error-free)
-# MTU на сервере tun-mtu 1420 — на клиенте тоже 1420
+# MTU на сервере tun-mtu 1420 — на клиенте max-mtu=1420
 ###############################################################################
 
 :global azConnectTo "vpn.example.com"

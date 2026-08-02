@@ -62,7 +62,7 @@
 
 **Шифрование:** AES-128-GCM → `cipher=aes128-gcm`. При OpenVPN DCO на сервере — только GCM/ChaCha. Без AES-NI на роутере попробуйте `chacha20-poly1305`.
 
-**MTU:** на сервере `tun-mtu 1420` — в клиенте ставим `mtu=1420`.
+**MTU:** на сервере `tun-mtu 1420` — в клиенте ставим `max-mtu=1420` (у OVPN-клиента параметр именно `max-mtu`, не `mtu`).
 
 **Патч UDP:** для MikroTik на сервере часто `/root/antizapret/patch-openvpn.sh 2` (**Error-free**).
 
@@ -163,7 +163,7 @@ DNS AntiZapret приходит с OVPN (`use-peer-dns=yes` на клиенте)
 ```mikrotik
 /interface ovpn-client add name=ovpn-out1 connect-to=vpn.example.com port=50443 mode=ip \
     protocol=tcp user=user profile=AZ_VPN certificate=client.crt_0 \
-    verify-server-certificate=yes tls-version=any auth=null cipher=aes128-gcm mtu=1420 \
+    verify-server-certificate=yes tls-version=any auth=null cipher=aes128-gcm max-mtu=1420 \
     use-peer-dns=yes add-default-route=no route-nopull=no
 ```
 
