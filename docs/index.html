@@ -41,7 +41,7 @@
       <textarea id="confPaste" rows="10" spellcheck="false" placeholder="client
 dev tun
 proto udp
-remote vpn.example.com 50080
+remote vpn.example.com 50443
 cipher AES-128-GCM
 auth SHA1
 &lt;ca&gt;
@@ -90,7 +90,7 @@ auth SHA1
         </div>
       </div>
       <p class="field-hint block-hint" id="schemeHint">
-        UDP → DNS шлюз <code>172.29.0.1</code> · TCP → <code>172.29.4.1</code>. Порты AntiZapret: <strong>50080</strong> / <strong>50443</strong> (резерв 80, 443, 504, 508).
+        UDP → DNS <code>172.29.0.1</code> · TCP → <code>172.29.4.1</code>. В шаблонах AZ первый remote — <strong>50443</strong> (ещё 50080; резерв 504/443/80/508).
       </p>
 
       <div class="wan-switch" role="radiogroup" aria-label="Режим VPN">
@@ -124,14 +124,14 @@ auth SHA1
             </label>
             <label>
               <span class="label-row">Port</span>
-              <input name="port" value="50080" required />
-              <span class="field-hint">Основные: 50080 / 50443. Резерв:</span>
+              <input name="port" value="50443" required />
+              <span class="field-hint">В шаблонах AZ первый <code>remote</code> — <strong>50443</strong>. Также 50080; резерв 504/443/80/508. MikroTik = один порт.</span>
               <div class="presets ports" role="group">
-                <button type="button" class="chip port active" data-port="50080">50080</button>
-                <button type="button" class="chip port" data-port="50443">50443</button>
-                <button type="button" class="chip port" data-port="80">80</button>
-                <button type="button" class="chip port" data-port="443">443</button>
+                <button type="button" class="chip port active" data-port="50443">50443</button>
+                <button type="button" class="chip port" data-port="50080">50080</button>
                 <button type="button" class="chip port" data-port="504">504</button>
+                <button type="button" class="chip port" data-port="443">443</button>
+                <button type="button" class="chip port" data-port="80">80</button>
                 <button type="button" class="chip port" data-port="508">508</button>
               </div>
             </label>

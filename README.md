@@ -49,13 +49,22 @@
 | Клиент / DNS (схема `10…`) | `10.29.0.x` / `10.29.0.1` | `10.29.4.x` / `10.29.4.1` |
 | Клиент / DNS (схема `172…`) | `172.29.0.x` / `172.29.0.1` | `172.29.4.x` / `172.29.4.1` |
 
-**Порты:** основные **50080** и **50443**; резерв **80**, **443**, **504**, **508**.
+**Порты:** в клиентских шаблонах AntiZapret первый `remote` — **50443**, затем резерв **504**, **443** (при включённых резервных портах на сервере также **50080**, **80**, **508**).  
+На MikroTik указывается **один** `connect-to` + `port` (в отличие от нескольких `remote` в `.ovpn`).
 
 **Маршруты:** сервер пушит их через OpenVPN CCD (`route-nopull=no` на клиенте).  
-Отдельного `mikrotik-openvpn-routes.txt` нет (в отличие от WireGuard).  
-После обновления списков AntiZapret на сервере — **переподключите** OVPN-клиент на MikroTik.
+Отдельного `mikrotik-openvpn-routes.txt` нет (в отличие от WireGuard — там `mikrotik-wireguard-routes.txt`).  
+После `/root/antizapret/doall.sh` на сервере — **переподключите** OVPN на MikroTik.
 
-**Шифрование:** по умолчанию AES-128-GCM → на MikroTik `cipher=aes128-gcm`. Без AES-NI попробуйте `chacha20-poly1305`.
+**DNS:** push `dhcp-option DNS *.29.0.1` / `*.29.4.1` + `block-outside-dns`. На MikroTik: `use-peer-dns=yes` на OVPN и `use-peer-dns=no` на WAN.
+
+**Шифрование:** AES-128-GCM → `cipher=aes128-gcm`. При OpenVPN DCO на сервере — только GCM/ChaCha. Без AES-NI на роутере попробуйте `chacha20-poly1305`.
+
+**MTU:** на сервере `tun-mtu 1420` — в клиенте ставим `mtu=1420`.
+
+**Патч UDP:** для MikroTik на сервере часто `/root/antizapret/patch-openvpn.sh 2` (**Error-free**).
+
+**Fake 198.18:** опция сервера для подменных IP в маршрутах; DNS-шлюз клиента остаётся `*.29.0.1` / `*.29.4.1`.
 
 ---
 
@@ -127,7 +136,7 @@ DNS AntiZapret приходит с OVPN (`use-peer-dns=yes` на клиенте)
 | Поле | Значение |
 |------|----------|
 | Connect To | хост из `remote` |
-| Port | из `.ovpn` (часто 50080) |
+| Port | из `.ovpn` (часто **50443**) |
 | Mode | ip |
 | Protocol | **udp** (предпочтительно) или tcp |
 | User / Password | из `.ovpn` |
@@ -142,9 +151,9 @@ DNS AntiZapret приходит с OVPN (`use-peer-dns=yes` на клиенте)
 | Route No Pull | **no** (тянуть маршруты AntiZapret) |
 
 ```mikrotik
-/interface ovpn-client add name=ovpn-out1 connect-to=vpn.example.com port=50080 mode=ip \
+/interface ovpn-client add name=ovpn-out1 connect-to=vpn.example.com port=50443 mode=ip \
     protocol=udp user=antizapret-client profile=VPN_PROFILE certificate=client.crt_0 \
-    verify-server-certificate=yes tls-version=any auth=null cipher=aes128-gcm \
+    verify-server-certificate=yes tls-version=any auth=null cipher=aes128-gcm mtu=1420 \
     use-peer-dns=yes add-default-route=no route-nopull=no
 ```
 

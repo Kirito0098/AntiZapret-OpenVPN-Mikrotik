@@ -1,13 +1,10 @@
 # Примеры для AntiZapret OpenVPN → MikroTik
 #
-# Порты: 50080, 50443 (+ 80, 443, 504, 508)
-# Схемы IP / DNS:
-#   UDP 10… → 10.29.0.x / DNS 10.29.0.1
-#   UDP 172… → 172.29.0.x / DNS 172.29.0.1
-#   TCP 10… → 10.29.4.x / DNS 10.29.4.1
-#   TCP 172… → 172.29.4.x / DNS 172.29.4.1
+# Порты (шаблон AZ): первый remote 50443, затем 504, 443; также 50080 / 80 / 508
+# DNS:
+#   UDP 10… → 10.29.0.1 · UDP 172… → 172.29.0.1
+#   TCP 10… → 10.29.4.1 · TCP 172… → 172.29.4.1
+# Маршруты: CCD push с сервера (не mikrotik-*-routes.txt)
+# MTU: 1420 · патч UDP MikroTik: patch-openvpn.sh 2 (Error-free)
 #
-# Маршруты: сервер пушит через CCD (не mikrotik-*-routes.txt).
-# После обновления списков AntiZapret — переподключите OVPN-клиент.
-#
-# Генератор: docs/ (GitHub Pages)
+# Онлайн-генератор: docs/ (GitHub Pages)

@@ -35,7 +35,7 @@
     :error "azCertificate missing"
 }
 
-:if ([:typeof $azPort] = "nothing" || $azPort = "") do={ :set azPort "50080" }
+:if ([:typeof $azPort] = "nothing" || $azPort = "") do={ :set azPort "50443" }
 :if ([:typeof $azProtocol] = "nothing" || $azProtocol = "") do={ :set azProtocol "udp" }
 :if ([:typeof $azCipher] = "nothing" || $azCipher = "") do={ :set azCipher "aes128-gcm" }
 :if ([:typeof $azAuth] = "nothing" || $azAuth = "") do={ :set azAuth "null" }
@@ -67,12 +67,12 @@
 :if ([:len [/interface ovpn-client find name=$azOvpnName]] = 0) do={
     /interface ovpn-client add name=$azOvpnName connect-to=$azConnectTo port=$azPort mode=ip \
         protocol=$azProtocol user=$azUser profile=$azProfileName certificate=$azCertificate \
-        verify-server-certificate=yes tls-version=$azTlsVersion auth=$azAuth cipher=$azCipher \
+        verify-server-certificate=yes tls-version=$azTlsVersion auth=$azAuth cipher=$azCipher mtu=1420 \
         use-peer-dns=yes add-default-route=no route-nopull=no disabled=no
 } else={
     /interface ovpn-client set [find name=$azOvpnName] connect-to=$azConnectTo port=$azPort \
         protocol=$azProtocol user=$azUser profile=$azProfileName certificate=$azCertificate \
-        verify-server-certificate=yes tls-version=$azTlsVersion auth=$azAuth cipher=$azCipher \
+        verify-server-certificate=yes tls-version=$azTlsVersion auth=$azAuth cipher=$azCipher mtu=1420 \
         use-peer-dns=yes add-default-route=no route-nopull=no disabled=no
 }
 :if ([:typeof $azPassword] != "nothing" && $azPassword != "") do={

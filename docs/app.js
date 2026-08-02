@@ -73,10 +73,20 @@
       return;
     }
 
-    const remote = text.match(/^\s*remote\s+(\S+)(?:\s+(\d+))?/im);
-    if (remote) {
-      setField("connectTo", remote[1]);
-      if (remote[2]) setField("port", remote[2]);
+    const remotes = [...text.matchAll(/^\s*remote\s+(\S+)(?:\s+(\d+))?(?:\s+(\S+))?/gim)];
+    if (remotes.length) {
+      setField("connectTo", remotes[0][1]);
+      if (remotes[0][2]) {
+        setField("port", remotes[0][2]);
+        document.querySelectorAll("[data-port]").forEach((b) =>
+          b.classList.toggle("active", b.dataset.port === remotes[0][2])
+        );
+      }
+      if (remotes[0][3] && /tcp|udp/i.test(remotes[0][3])) {
+        const p = remotes[0][3].toLowerCase().includes("tcp") ? "tcp" : "udp";
+        setField("protocol", p);
+        setProto(p, false);
+      }
     }
 
     const proto = text.match(/^\s*proto\s+(\S+)/im);
@@ -143,7 +153,7 @@
     });
     setField("protocol", proto);
     if (fillPort) {
-      const port = proto === "tcp" ? "50443" : "50080";
+      const port = "50443";
       setField("port", port);
       document.querySelectorAll("[data-port]").forEach((b) =>
         b.classList.toggle("active", b.dataset.port === port)
@@ -177,7 +187,7 @@
     const dns = dnsFor(scheme, proto);
     hint.innerHTML =
       `${proto.toUpperCase()} · схема <strong>${scheme}…</strong> · ожидаемый DNS <code>${dns}</code>. ` +
-      `Порты: <strong>50080</strong> / <strong>50443</strong> (резерв 80, 443, 504, 508).`;
+      `Порты шаблона AZ: <strong>50443</strong> (+ резерв 504, 443; также 50080 / 80 / 508). На MikroTik — один connect-to.`;
   }
 
   function setVpnMode(mode) {
@@ -306,13 +316,13 @@ ${verNote}
     /interface ovpn-client add name=$azOvpnName connect-to=$azConnectTo port=$azPort mode=ip \\
         protocol=$azProtocol user=$azUser${passArg} \\
         profile=$azProfileName certificate=$azCertificate verify-server-certificate=yes \\
-        tls-version=$azTlsVersion auth=$azAuth cipher=$azCipher \\
+        tls-version=$azTlsVersion auth=$azAuth cipher=$azCipher mtu=1420 \\
         use-peer-dns=yes add-default-route=no route-nopull=no disabled=no
 } else={
     /interface ovpn-client set [find name=$azOvpnName] connect-to=$azConnectTo port=$azPort \\
         protocol=$azProtocol user=$azUser${passArg} \\
         profile=$azProfileName certificate=$azCertificate verify-server-certificate=yes \\
-        tls-version=$azTlsVersion auth=$azAuth cipher=$azCipher \\
+        tls-version=$azTlsVersion auth=$azAuth cipher=$azCipher mtu=1420 \\
         use-peer-dns=yes add-default-route=no route-nopull=no disabled=no
 }
 

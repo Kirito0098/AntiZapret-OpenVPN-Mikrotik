@@ -6,9 +6,9 @@ add name=VPN_PROFILE change-tcp-mss=yes \
     on-down="/ip dns cache flush;\r\n/ip dns set servers=8.8.8.8"
 
 /interface ovpn-client
-add name=ovpn-out1 connect-to=vpn.example.com port=50080 mode=ip protocol=udp \
+add name=ovpn-out1 connect-to=vpn.example.com port=50443 mode=ip protocol=udp \
     user=antizapret-client profile=VPN_PROFILE certificate=client.crt_0 \
-    verify-server-certificate=yes tls-version=any auth=null cipher=aes128-gcm \
+    verify-server-certificate=yes tls-version=any auth=null cipher=aes128-gcm mtu=1420 \
     use-peer-dns=yes add-default-route=no route-nopull=no
 
 /ip firewall nat

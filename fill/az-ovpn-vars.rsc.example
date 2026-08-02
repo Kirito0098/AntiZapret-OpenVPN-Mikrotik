@@ -7,13 +7,16 @@
 # 4. /import file-name=az-ovpn-vars.rsc
 #    /import file-name=az-ovpn-install.rsc
 #
-# Порты AntiZapret OpenVPN: 50080, 50443 (резерв 80, 443, 504, 508)
+# Порты AntiZapret OpenVPN: в шаблонах AZ первый remote = 50443 (+ 504, 443);
+# также 50080; резерв 80, 508. На MikroTik указывается один connect-to/port.
 # DNS: UDP *.29.0.1 · TCP *.29.4.1 (схемы 10… или 172…)
-# Маршруты пушатся сервером — route-nopull=no; после обновления AZ — reconnect
+# Маршруты пушатся сервером — route-nopull=no; после doall.sh — reconnect
+# Патч UDP для MikroTik: /root/antizapret/patch-openvpn.sh 2  (Error-free)
+# MTU на сервере tun-mtu 1420 — на клиенте тоже 1420
 ###############################################################################
 
 :global azConnectTo "vpn.example.com"
-:global azPort "50080"
+:global azPort "50443"
 :global azProtocol "udp"
 :global azCipher "aes128-gcm"
 :global azAuth "null"
