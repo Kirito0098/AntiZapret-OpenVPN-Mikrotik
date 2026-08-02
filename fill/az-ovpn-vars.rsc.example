@@ -31,7 +31,7 @@
 :global azDefaultDns "8.8.8.8"
 
 :global azOvpnName "ovpn-out1"
-:global azProfileName "VPN_PROFILE"
+:global azProfileName "AZ_VPN"
 :global azTlsVersion "any"
 # single | multi (RedirectDNS + mangle)
 :global azVpnMode "single"

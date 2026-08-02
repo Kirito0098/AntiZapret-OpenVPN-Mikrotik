@@ -152,7 +152,7 @@ DNS AntiZapret приходит с OVPN (`use-peer-dns=yes` на клиенте)
 
 ```mikrotik
 /interface ovpn-client add name=ovpn-out1 connect-to=vpn.example.com port=50443 mode=ip \
-    protocol=udp user=antizapret-client profile=VPN_PROFILE certificate=client.crt_0 \
+    protocol=tcp user=user profile=AZ_VPN certificate=client.crt_0 \
     verify-server-certificate=yes tls-version=any auth=null cipher=aes128-gcm mtu=1420 \
     use-peer-dns=yes add-default-route=no route-nopull=no
 ```

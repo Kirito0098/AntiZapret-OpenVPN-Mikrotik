@@ -41,7 +41,7 @@
 :if ([:typeof $azAuth] = "nothing" || $azAuth = "") do={ :set azAuth "null" }
 :if ([:typeof $azUser] = "nothing" || $azUser = "") do={ :set azUser "antizapret-client" }
 :if ([:typeof $azOvpnName] = "nothing" || $azOvpnName = "") do={ :set azOvpnName "ovpn-out1" }
-:if ([:typeof $azProfileName] = "nothing" || $azProfileName = "") do={ :set azProfileName "VPN_PROFILE" }
+:if ([:typeof $azProfileName] = "nothing" || $azProfileName = "") do={ :set azProfileName "AZ_VPN" }
 :if ([:typeof $azDefaultDns] = "nothing" || $azDefaultDns = "") do={ :set azDefaultDns "8.8.8.8" }
 :if ([:typeof $azTlsVersion] = "nothing" || $azTlsVersion = "") do={ :set azTlsVersion "any" }
 :if ([:typeof $azVpnMode] = "nothing" || $azVpnMode = "") do={ :set azVpnMode "single" }
