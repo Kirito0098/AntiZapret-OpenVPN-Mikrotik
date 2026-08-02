@@ -3,7 +3,8 @@
 > Инструкция по подключению MikroTik к **[AntiZapret-VPN](https://github.com/GubernievS/AntiZapret-VPN)** через OpenVPN.  
 > Шаги с пояснениями и скриншотами WinBox + онлайн-генератор конфига.
 
-Рекомендуется **RouterOS 7.20+** (лучше **7.21.4+** для OVPN push-routes); генератор также отдаёт профиль под **7.19.x**. Для WireGuard смотрите [AntiZapret-WG-Mikrotik](https://github.com/Kirito0098/AntiZapret-WG-Mikrotik).
+Рекомендуется **RouterOS 7.20+** (лучше **7.21.4+** для OVPN push-routes); генератор также отдаёт профиль под **7.19.x**.  
+На **RouterOS ниже 7.20** OpenVPN **UDP** на клиенте MikroTik часто работает плохо — берите **TCP** (см. [сноску про UDP](#udp-на-ros--720)). Для WireGuard: [AntiZapret-WG-Mikrotik](https://github.com/Kirito0098/AntiZapret-WG-Mikrotik).
 
 ---
 
@@ -12,6 +13,7 @@
 - [Онлайн-генератор](#онлайн-генератор-github-pages)
 - [Что понадобится](#-что-понадобится)
 - [Схемы IP и порты](#-схемы-ip-и-порты)
+- [UDP на ROS &lt; 7.20](#udp-на-ros--720)
 - [1️⃣ Подготовка сертификатов](#1️⃣-подготовка-сертификатов)
 - [2️⃣ PPP-профиль (On Up / On Down)](#2️⃣-ppp-профиль-on-up--on-down)
 - [3️⃣ OpenVPN-клиент](#3️⃣-openvpn-клиент)
@@ -37,7 +39,7 @@
 - Роутер MikroTik с **RouterOS 7.x** (рекомендуется **7.20+**, лучше **7.21.4+** из‑за фикса OVPN push-routes; есть профиль генератора и под **7.19.x**)
 - WinBox / WebFig / Terminal
 - Клиентский файл с сервера AntiZapret:  
-  `/root/antizapret/client/` → лучше **`*-udp.ovpn`** (также есть `*-tcp.ovpn`)
+  `/root/antizapret/client/` → на **7.20+** удобнее **`*-udp.ovpn`**; на **&lt; 7.20** надёжнее **`*-tcp.ovpn`** ([почему](#udp-на-ros--720))
 - На сервере AntiZapret для MikroTik часто ставят патч OpenVPN **Error-free** (см. setup AntiZapret-VPN)
 
 ---
@@ -65,6 +67,12 @@
 **Патч UDP:** для MikroTik на сервере часто `/root/antizapret/patch-openvpn.sh 2` (**Error-free**).
 
 **Fake 198.18:** опция сервера для подменных IP в маршрутах; DNS-шлюз клиента остаётся `*.29.0.1` / `*.29.4.1`.
+
+<a id="udp-на-ros--720"></a>
+
+> **UDP на RouterOS &lt; 7.20.** У OVPN-клиента MikroTik транспорт **UDP** на старых 7.x неоднократно ломался: туннель поднимается (IP есть), а трафик не ходит, либо зависает TLS/handshake — при этом **TCP** обычно работает. У самого MikroTik у клиента по умолчанию как раз `protocol=tcp` ([документация OpenVPN](https://help.mikrotik.com/docs/spaces/ROS/pages/2031655/OpenVPN)).  
+> Доказательства с форума: [UDP не форвардит после 7.10.1, TCP ок](https://forum.mikrotik.com/t/mikrotik-openvpn-client-over-udp-stopped-forwarding-traffic-on-routeros-7-10-1/167951); [UDP «Link established», handshake нестабилен vs TCP](https://forum.mikrotik.com/viewtopic.php?t=211836); [OVPN UDP к Linux-серверу / unroutable control packet](https://forum.mikrotik.com/t/ovpn-in-udp-with-linux-ovpn-server/167789); [UDP TLS timeout к pfSense](https://forum.mikrotik.com/t/openvpn-udp-between-pfsense-and-mikrotik/168480); на **7.19.4** ещё и [UDP/MTU/DF](https://forum.mikrotik.com/t/openvpn-udp-packet-size-too-big-for-the-configured-mtu-ros-7-19-4-solved/264177).  
+> **Итог:** на **&lt; 7.20** ставьте **TCP** (`*-tcp.ovpn`, порт всё тот же **50443**). На **7.20+** UDP обычно приемлемее (+ патч Error-free на сервере), но TCP по-прежнему самый предсказуемый вариант на MikroTik.
 
 ---
 
@@ -138,7 +146,7 @@ DNS AntiZapret приходит с OVPN (`use-peer-dns=yes` на клиенте)
 | Connect To | хост из `remote` |
 | Port | из `.ovpn` (часто **50443**) |
 | Mode | ip |
-| Protocol | **udp** (предпочтительно) или **tcp** (тоже рабочий вариант) |
+| Protocol | **tcp** на ROS **&lt; 7.20**; на **7.20+** — **udp** или **tcp** ([сноска](#udp-на-ros--720)) |
 | User / Password | из `.ovpn` (часто `user` + пароль) |
 | Profile | `AZ_VPN` (или своё имя) |
 | Certificate | имя после Import (например `cert_ovpn-import…`) |
@@ -252,6 +260,7 @@ DNS AntiZapret приходит с OVPN (`use-peer-dns=yes` на клиенте)
 ## 💡 Полезные советы
 
 - Не подключается: сертификаты trusted? порт/proto? имя `certificate` совпадает с Certificates?
+- UDP «connected», а сайты не открываются (особенно на **&lt; 7.20**): переключитесь на **TCP** — [сноска](#udp-на-ros--720)
 - Нет интернета через VPN: есть ли Masquerade на `ovpn-out1`? `route-nopull=no`?
 - DNS «ломается»: на WAN `use-peer-dns=no`; на OVPN `use-peer-dns=yes`
 - MTU / FastTrack: при обрывах попробуйте clamp MSS в профиле (`change-tcp-mss=yes`) или временно отключить FastTrack

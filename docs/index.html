@@ -74,6 +74,7 @@ auth SHA1
         </div>
         <p class="field-hint block-hint" id="versionHint">
           Конфиг под <strong>7.20+</strong> (лучше 7.21.4+): стабильнее приём push-маршрутов OpenVPN от AntiZapret.
+          UDP обычно ок; на <strong>&lt; 7.20</strong> надёжнее TCP.
           Имя файла: <code>az-ovpn-ready-7.20.rsc</code>.
         </p>
       </div>
@@ -81,16 +82,17 @@ auth SHA1
       <div class="panel-head subhead">
         <h3>Протокол / схема IP</h3>
         <div class="presets" role="group" aria-label="Протокол">
-          <button type="button" class="chip active" data-proto="udp" title="Рекомендуется AntiZapret">UDP</button>
-          <button type="button" class="chip" data-proto="tcp">TCP</button>
+          <button type="button" class="chip active" data-proto="udp" title="На 7.20+ ок; на &lt;7.20 часто ломается">UDP</button>
+          <button type="button" class="chip" data-proto="tcp" title="Надёжнее на ROS &lt; 7.20">TCP</button>
         </div>
         <div class="presets" role="group" aria-label="Схема IP">
           <button type="button" class="chip active" data-scheme="172" title="Альтернативные клиенты">172…</button>
           <button type="button" class="chip" data-scheme="10" title="Клиенты по умолчанию">10…</button>
         </div>
       </div>
-      <p class="field-hint block-hint" id="schemeHint">
+        <p class="field-hint block-hint" id="schemeHint">
         UDP → DNS <code>172.29.0.1</code> · TCP → <code>172.29.4.1</code>. В шаблонах AZ первый remote — <strong>50443</strong> (ещё 50080; резерв 504/443/80/508).
+        На ROS &lt; 7.20 предпочтителен <strong>TCP</strong>.
       </p>
 
       <div class="wan-switch" role="radiogroup" aria-label="Режим VPN">

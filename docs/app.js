@@ -185,9 +185,16 @@
     const scheme = currentScheme();
     const proto = form.elements.protocol?.value || "udp";
     const dns = dnsFor(scheme, proto);
+    const ros = form.elements.rosVersion?.value || "7.20";
+    const udpWarn =
+      ros === "7.19" && proto === "udp"
+        ? ` <strong>На 7.19.x UDP часто нестабилен</strong> — лучше TCP (` +
+          `<a href="https://forum.mikrotik.com/t/mikrotik-openvpn-client-over-udp-stopped-forwarding-traffic-on-routeros-7-10-1/167951" target="_blank" rel="noopener">форум</a>).`
+        : "";
     hint.innerHTML =
       `${proto.toUpperCase()} · схема <strong>${scheme}…</strong> · ожидаемый DNS <code>${dns}</code>. ` +
-      `Порты шаблона AZ: <strong>50443</strong> (+ резерв 504, 443; также 50080 / 80 / 508). На MikroTik — один connect-to.`;
+      `Порты шаблона AZ: <strong>50443</strong> (+ резерв 504, 443; также 50080 / 80 / 508). На MikroTik — один connect-to.` +
+      udpWarn;
   }
 
   function setVpnMode(mode) {
@@ -403,9 +410,13 @@ ${mangle}
 
   const VERSION_HINTS = {
     "7.20":
-      'Конфиг под <strong>7.20+</strong> (лучше <strong>7.21.4+</strong>): стабильнее приём push-маршрутов OpenVPN от AntiZapret. Файл: <code>az-ovpn-ready-7.20.rsc</code>.',
+      'Конфиг под <strong>7.20+</strong> (лучше <strong>7.21.4+</strong>): стабильнее приём push-маршрутов OpenVPN от AntiZapret. UDP обычно ок (+ Error-free на сервере); TCP — запасной надёжный вариант. Файл: <code>az-ovpn-ready-7.20.rsc</code>.',
     "7.19":
-      'Конфиг под <strong>7.19.x</strong>: команды OVPN-клиента те же. Если маршруты AntiZapret не применяются — обновите RouterOS до 7.21.4+. Файл: <code>az-ovpn-ready-7.19.rsc</code>.',
+      'Конфиг под <strong>7.19.x</strong>: на ROS &lt; 7.20 OpenVPN <strong>UDP</strong> часто ломается (туннель up, трафик нет) — берите <strong>TCP</strong>. ' +
+      'См. <a href="https://forum.mikrotik.com/t/mikrotik-openvpn-client-over-udp-stopped-forwarding-traffic-on-routeros-7-10-1/167951" target="_blank" rel="noopener">форум 7.10.1</a>, ' +
+      '<a href="https://forum.mikrotik.com/t/openvpn-udp-packet-size-too-big-for-the-configured-mtu-ros-7-19-4-solved/264177" target="_blank" rel="noopener">MTU на 7.19.4</a>, ' +
+      '<a href="https://help.mikrotik.com/docs/spaces/ROS/pages/2031655/OpenVPN" target="_blank" rel="noopener">docs: protocol default tcp</a>. ' +
+      'Если маршруты не пушатся — обновите до 7.21.4+. Файл: <code>az-ovpn-ready-7.19.rsc</code>.',
   };
 
   function setRosVersion(ver) {
@@ -418,7 +429,13 @@ ${mangle}
     });
     const hint = $("#versionHint");
     if (hint) hint.innerHTML = VERSION_HINTS[ver] || VERSION_HINTS["7.20"];
-    refresh();
+    // На <7.20 UDP у OVPN-клиента часто ломается — предлагаем TCP.
+    if (ver === "7.19") {
+      setProto("tcp", true);
+    } else {
+      refreshSchemeHint();
+      refresh();
+    }
   }
 
   document.querySelectorAll(".version-btn").forEach((btn) => {
