@@ -24,6 +24,7 @@
     "profileName",
     "tlsVersion",
     "vpnMode",
+    "rosVersion",
   ];
 
   function toast(msg) {
@@ -249,6 +250,11 @@
     const onUp = escOnUp(buildOnUp(v));
     const onDown = escOnUp(buildOnDown(v));
     const passArg = v.password ? ` \\\n        password=${q(v.password)}` : "";
+    const is720 = v.rosVersion !== "7.19";
+    const verNote = is720
+      ? "# Целевая версия: RouterOS 7.20+ (рекомендуется 7.21.4+ — фикс OVPN push-routes)"
+      : "# Целевая версия: RouterOS 7.19.x (OVPN API тот же; при проблемах с маршрутами обновитесь до 7.21.4+)";
+    const fileHint = is720 ? "az-ovpn-ready-7.20.rsc" : "az-ovpn-ready-7.19.rsc";
     const mangle =
       v.vpnMode === "multi"
         ? `
@@ -261,14 +267,15 @@
 `;
 
     return `###############################################################################
-# AntiZapret OpenVPN — готовый скрипт для MikroTik (RouterOS 7.x)
+# AntiZapret OpenVPN — готовый скрипт для MikroTik
+${verNote}
 # Сгенерировано локально в браузере (секреты никуда не отправлялись)
 # Перед импортом: загрузите ca.crt, client.crt, client.key в Files и:
 #   /certificate import file-name=ca.crt
 #   /certificate import file-name=client.crt
 #   /certificate import file-name=client.key
 # Проверьте имя сертификата (часто client.crt_0) и подставьте в azCertificate
-# Импорт: /import file-name=az-ovpn-ready.rsc
+# Импорт: /import file-name=${fileHint}
 # Маршруты AntiZapret пушатся сервером OVPN — после обновления списков переподключите клиент
 ###############################################################################
 
@@ -354,7 +361,8 @@ ${mangle}
   function download() {
     const v = getValues();
     if (!isReady(v)) return;
-    downloadText("az-ovpn-ready.rsc", buildRsc(v));
+    const name = v.rosVersion === "7.19" ? "az-ovpn-ready-7.19.rsc" : "az-ovpn-ready-7.20.rsc";
+    downloadText(name, buildRsc(v));
   }
 
   async function copy() {
@@ -382,6 +390,30 @@ ${mangle}
 
   form.addEventListener("input", refresh);
   form.addEventListener("change", refresh);
+
+  const VERSION_HINTS = {
+    "7.20":
+      'Конфиг под <strong>7.20+</strong> (лучше <strong>7.21.4+</strong>): стабильнее приём push-маршрутов OpenVPN от AntiZapret. Файл: <code>az-ovpn-ready-7.20.rsc</code>.',
+    "7.19":
+      'Конфиг под <strong>7.19.x</strong>: команды OVPN-клиента те же. Если маршруты AntiZapret не применяются — обновите RouterOS до 7.21.4+. Файл: <code>az-ovpn-ready-7.19.rsc</code>.',
+  };
+
+  function setRosVersion(ver) {
+    const input = $("#rosVersion");
+    if (input) input.value = ver;
+    document.querySelectorAll(".version-btn").forEach((btn) => {
+      const on = btn.dataset.ros === ver;
+      btn.classList.toggle("active", on);
+      btn.setAttribute("aria-checked", on ? "true" : "false");
+    });
+    const hint = $("#versionHint");
+    if (hint) hint.innerHTML = VERSION_HINTS[ver] || VERSION_HINTS["7.20"];
+    refresh();
+  }
+
+  document.querySelectorAll(".version-btn").forEach((btn) => {
+    btn.addEventListener("click", () => setRosVersion(btn.dataset.ros));
+  });
 
   document.querySelectorAll("[data-proto]").forEach((btn) => {
     btn.addEventListener("click", () => setProto(btn.dataset.proto, true));

@@ -1,5 +1,7 @@
 ###############################################################################
-# AntiZapret OpenVPN — автоустановка на MikroTik (RouterOS 7.x)
+# AntiZapret OpenVPN — автоустановка на MikroTik
+# Рекомендуется RouterOS 7.20+ (лучше 7.21.4+ — фикс OVPN push-routes).
+# На 7.19.x скрипт тот же по API клиента.
 #
 # Перед запуском:
 #   1. ca.crt / client.crt / client.key в Files → Certificates Import

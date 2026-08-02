@@ -3,7 +3,7 @@
 > Инструкция по подключению MikroTik к **[AntiZapret-VPN](https://github.com/GubernievS/AntiZapret-VPN)** через OpenVPN.  
 > Шаги с пояснениями и скриншотами WinBox + онлайн-генератор конфига.
 
-Рекомендуется **RouterOS 7.x**. Для WireGuard смотрите [AntiZapret-WG-Mikrotik](https://github.com/Kirito0098/AntiZapret-WG-Mikrotik).
+Рекомендуется **RouterOS 7.20+** (лучше **7.21.4+** для OVPN push-routes); генератор также отдаёт профиль под **7.19.x**. Для WireGuard смотрите [AntiZapret-WG-Mikrotik](https://github.com/Kirito0098/AntiZapret-WG-Mikrotik).
 
 ---
 
@@ -26,7 +26,7 @@
 
 ### Онлайн-генератор (GitHub Pages)
 
-Откройте **[генератор конфига](https://kirito0098.github.io/AntiZapret-OpenVPN-Mikrotik/)** → вставьте `*.ovpn` → скачайте `ca.crt` / `client.crt` / `client.key` и `az-ovpn-ready.rsc` → загрузите в Files → импортируйте сертификаты → `/import file-name=az-ovpn-ready.rsc`.
+Откройте **[генератор конфига](https://kirito0098.github.io/AntiZapret-OpenVPN-Mikrotik/)** → выберите версию (**7.20+** или **7.19.x**) → вставьте `*.ovpn` → скачайте сертификаты и `az-ovpn-ready-7.20.rsc` (или `…-7.19.rsc`) → загрузите в Files → импортируйте сертификаты → `/import file-name=az-ovpn-ready-7.20.rsc`.
 
 Ключи обрабатываются **только в браузере**.
 
@@ -34,7 +34,7 @@
 
 ## 📦 Что понадобится
 
-- Роутер MikroTik с **RouterOS 7.x**
+- Роутер MikroTik с **RouterOS 7.x** (рекомендуется **7.20+**, лучше **7.21.4+** из‑за фикса OVPN push-routes; есть профиль генератора и под **7.19.x**)
 - WinBox / WebFig / Terminal
 - Клиентский файл с сервера AntiZapret:  
   `/root/antizapret/client/` → лучше **`*-udp.ovpn`** (также есть `*-tcp.ovpn`)

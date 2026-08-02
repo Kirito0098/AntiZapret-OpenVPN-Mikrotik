@@ -28,7 +28,7 @@
       Вставьте свой <code>*.ovpn</code>, скачайте <code>ca.crt</code> / <code>client.crt</code> / <code>client.key</code>
       и готовый <code>.rsc</code> — импорт в терминале MikroTik.
     </p>
-    <p class="privacy">Сертификаты и пароль не уходят на сервер: всё собирается в браузере. Целевая RouterOS <strong>7.x</strong>. Маршруты AntiZapret приходят с сервера OpenVPN (reconnect после обновления списков).</p>
+    <p class="privacy">Сертификаты и пароль не уходят на сервер: всё собирается в браузере. Рекомендуется RouterOS <strong>7.20+</strong> (лучше 7.21.4+ для push-маршрутов; long-term 7.21 / stable 7.23). Есть профиль под <strong>7.19.x</strong>.</p>
   </header>
 
   <main class="layout">
@@ -58,6 +58,24 @@ auth SHA1
     <section class="panel form-panel">
       <div class="panel-head">
         <h2><span class="step" aria-hidden="true">2</span> Параметры</h2>
+      </div>
+
+      <div class="version-switch" role="radiogroup" aria-label="Версия RouterOS">
+        <p class="version-switch-title">Версия MikroTik RouterOS</p>
+        <div class="version-switch-track">
+          <button type="button" class="version-btn active" data-ros="7.20" role="radio" aria-checked="true">
+            <strong>7.20+</strong>
+            <span>рекомендуется · 7.21 LTS / 7.23</span>
+          </button>
+          <button type="button" class="version-btn" data-ros="7.19" role="radio" aria-checked="false">
+            <strong>7.19.x</strong>
+            <span>старее · тот же OVPN API</span>
+          </button>
+        </div>
+        <p class="field-hint block-hint" id="versionHint">
+          Конфиг под <strong>7.20+</strong> (лучше 7.21.4+): стабильнее приём push-маршрутов OpenVPN от AntiZapret.
+          Имя файла: <code>az-ovpn-ready-7.20.rsc</code>.
+        </p>
       </div>
 
       <div class="panel-head subhead">
@@ -93,6 +111,7 @@ auth SHA1
       </div>
 
       <form id="cfgForm" autocomplete="off">
+        <input type="hidden" name="rosVersion" id="rosVersion" value="7.20" />
         <input type="hidden" name="vpnMode" id="vpnMode" value="single" />
 
         <fieldset>
@@ -248,7 +267,7 @@ auth SHA1
         <li>Скачайте <code>ca.crt</code>, <code>client.crt</code>, <code>client.key</code> и загрузите в Files</li>
         <li>Импортируйте сертификаты (System → Certificates → Import)</li>
         <li>Проверьте имя сертификата в поле выше (часто <code>client.crt_0</code>)</li>
-        <li>Скачайте <code>az-ovpn-ready.rsc</code> и: <code>/import file-name=az-ovpn-ready.rsc</code></li>
+        <li>Скачайте <code>az-ovpn-ready-7.20.rsc</code> или <code>…-7.19.rsc</code> (переключатель версии выше) и: <code>/import file-name=az-ovpn-ready-7.20.rsc</code></li>
         <li>Маршруты подтянутся с сервера OpenVPN; после обновления AntiZapret — переподключите OVPN</li>
       </ol>
       <p class="hint">
