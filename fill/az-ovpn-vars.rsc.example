@@ -1,0 +1,36 @@
+###############################################################################
+# AntiZapret OpenVPN — переменные для MikroTik
+#
+# 1. Скопируйте как az-ovpn-vars.rsc (без .example)
+# 2. Заполните из клиентского *-udp.ovpn / *-tcp.ovpn
+# 3. Загрузите ca.crt, client.crt, client.key в Files и импортируйте Certificates
+# 4. /import file-name=az-ovpn-vars.rsc
+#    /import file-name=az-ovpn-install.rsc
+#
+# Порты AntiZapret OpenVPN: 50080, 50443 (резерв 80, 443, 504, 508)
+# DNS: UDP *.29.0.1 · TCP *.29.4.1 (схемы 10… или 172…)
+# Маршруты пушатся сервером — route-nopull=no; после обновления AZ — reconnect
+###############################################################################
+
+:global azConnectTo "vpn.example.com"
+:global azPort "50080"
+:global azProtocol "udp"
+:global azCipher "aes128-gcm"
+:global azAuth "null"
+:global azUser "antizapret-client"
+:global azPassword ""
+# Имя после System → Certificates → Import (часто client.crt_0)
+:global azCertificate "client.crt_0"
+
+:global azLanNetwork "192.168.88.0/24"
+# DHCP: ether1 · PPPoE: pppoe-out1 (не физический ether1)
+:global azWanInterface "ether1"
+:global azDefaultDns "8.8.8.8"
+
+:global azOvpnName "ovpn-out1"
+:global azProfileName "VPN_PROFILE"
+:global azTlsVersion "any"
+# single | multi (RedirectDNS + mangle)
+:global azVpnMode "single"
+
+/log info "[AZ-OVPN] Переменные загружены. Запустите: /import file-name=az-ovpn-install.rsc"

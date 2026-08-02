@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AntiZapret → MikroTik · генератор OpenVPN</title>
+  <meta name="description" content="Вставьте *.ovpn AntiZapret, скачайте сертификаты и готовый .rsc для MikroTik RouterOS." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+
+  <div class="topbar">
+    <a class="brand" href="https://github.com/Kirito0098/AntiZapret-OpenVPN-Mikrotik">AntiZapret<span> → MikroTik OVPN</span></a>
+    <span class="topbar-meta">RouterOS 7 · client-side</span>
+  </div>
+
+  <header class="hero">
+    <p class="eyebrow">OpenVPN · сертификаты + .rsc</p>
+    <h1>
+      <span class="brand-line">AntiZapret</span>
+      Генератор MikroTik OVPN
+    </h1>
+    <p class="lede">
+      Вставьте свой <code>*.ovpn</code>, скачайте <code>ca.crt</code> / <code>client.crt</code> / <code>client.key</code>
+      и готовый <code>.rsc</code> — импорт в терминале MikroTik.
+    </p>
+    <p class="privacy">Сертификаты и пароль не уходят на сервер: всё собирается в браузере. Целевая RouterOS <strong>7.x</strong>. Маршруты AntiZapret приходят с сервера OpenVPN (reconnect после обновления списков).</p>
+  </header>
+
+  <main class="layout">
+    <section class="panel paste-panel">
+      <div class="panel-head">
+        <h2><span class="step" aria-hidden="true">1</span> Вставьте *.ovpn</h2>
+        <button type="button" class="ghost" id="btnClearPaste">Очистить</button>
+      </div>
+      <p class="field-hint block-hint">Файл с сервера AntiZapret: <code>antizapret-*-udp.ovpn</code> или <code>*-tcp.ovpn</code> из <code>/root/antizapret/client</code>. «Разобрать» заполнит поля и извлечёт сертификаты.</p>
+      <textarea id="confPaste" rows="10" spellcheck="false" placeholder="client
+dev tun
+proto udp
+remote vpn.example.com 50080
+cipher AES-128-GCM
+auth SHA1
+&lt;ca&gt;
+-----BEGIN CERTIFICATE-----
+...
+-----END CERTIFICATE-----
+&lt;/ca&gt;
+&lt;cert&gt;...&lt;/cert&gt;
+&lt;key&gt;...&lt;/key&gt;
+"></textarea>
+      <button type="button" class="primary" id="btnParse">Разобрать конфиг</button>
+    </section>
+
+    <section class="panel form-panel">
+      <div class="panel-head">
+        <h2><span class="step" aria-hidden="true">2</span> Параметры</h2>
+      </div>
+
+      <div class="panel-head subhead">
+        <h3>Протокол / схема IP</h3>
+        <div class="presets" role="group" aria-label="Протокол">
+          <button type="button" class="chip active" data-proto="udp" title="Рекомендуется AntiZapret">UDP</button>
+          <button type="button" class="chip" data-proto="tcp">TCP</button>
+        </div>
+        <div class="presets" role="group" aria-label="Схема IP">
+          <button type="button" class="chip active" data-scheme="172" title="Альтернативные клиенты">172…</button>
+          <button type="button" class="chip" data-scheme="10" title="Клиенты по умолчанию">10…</button>
+        </div>
+      </div>
+      <p class="field-hint block-hint" id="schemeHint">
+        UDP → DNS шлюз <code>172.29.0.1</code> · TCP → <code>172.29.4.1</code>. Порты AntiZapret: <strong>50080</strong> / <strong>50443</strong> (резерв 80, 443, 504, 508).
+      </p>
+
+      <div class="wan-switch" role="radiogroup" aria-label="Режим VPN">
+        <p class="wan-switch-title">Режим DNS / VPN</p>
+        <div class="wan-switch-track">
+          <button type="button" class="wan-btn active" data-mode="single" role="radio" aria-checked="true">
+            <strong>Один VPN</strong>
+            <span>только AntiZapret</span>
+          </button>
+          <button type="button" class="wan-btn" data-mode="multi" role="radio" aria-checked="false">
+            <strong>Несколько VPN</strong>
+            <span>RedirectDNS + mangle</span>
+          </button>
+        </div>
+        <p class="field-hint block-hint" id="modeHint">
+          Один туннель: DNS от OVPN (<code>use-peer-dns=yes</code>), On Up только flush кэша.
+        </p>
+      </div>
+
+      <form id="cfgForm" autocomplete="off">
+        <input type="hidden" name="vpnMode" id="vpnMode" value="single" />
+
+        <fieldset>
+          <legend>Из .ovpn</legend>
+          <div class="row">
+            <label>
+              <span class="label-row">Connect to</span>
+              <input name="connectTo" required placeholder="vpn.example.com" />
+              <span class="field-hint">Хост из <code>remote</code>.</span>
+            </label>
+            <label>
+              <span class="label-row">Port</span>
+              <input name="port" value="50080" required />
+              <span class="field-hint">Основные: 50080 / 50443. Резерв:</span>
+              <div class="presets ports" role="group">
+                <button type="button" class="chip port active" data-port="50080">50080</button>
+                <button type="button" class="chip port" data-port="50443">50443</button>
+                <button type="button" class="chip port" data-port="80">80</button>
+                <button type="button" class="chip port" data-port="443">443</button>
+                <button type="button" class="chip port" data-port="504">504</button>
+                <button type="button" class="chip port" data-port="508">508</button>
+              </div>
+            </label>
+          </div>
+          <div class="row">
+            <label>
+              <span class="label-row">Protocol</span>
+              <select name="protocol">
+                <option value="udp" selected>udp</option>
+                <option value="tcp">tcp</option>
+              </select>
+            </label>
+            <label>
+              <span class="label-row">Cipher</span>
+              <input name="cipher" value="aes128-gcm" required />
+              <span class="field-hint">Из .ovpn: AES-128-GCM → <code>aes128-gcm</code>. Без AES-NI попробуйте <code>chacha20-poly1305</code>.</span>
+            </label>
+          </div>
+          <div class="row">
+            <label>
+              <span class="label-row">Auth</span>
+              <input name="auth" value="null" />
+              <span class="field-hint">Часто <code>null</code> на MikroTik при GCM; иначе как в .ovpn (sha1…).</span>
+            </label>
+            <label>
+              <span class="label-row">User</span>
+              <input name="user" value="antizapret-client" />
+              <span class="field-hint">Имя пользователя из .ovpn / сервера.</span>
+            </label>
+          </div>
+          <label>
+            <span class="label-row">Password <span class="opt">если есть</span></span>
+            <input name="password" type="password" autocomplete="off" />
+            <span class="field-hint">Оставьте пустым, если вход только по сертификату.</span>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Сертификаты на MikroTik</legend>
+          <p class="field-hint block-hint">После импорта файлов в Certificates укажите <em>имя</em> клиентского сертификата (часто <code>client.crt_0</code>). CA обычно помечается Trusted.</p>
+          <div class="row">
+            <label>
+              <span class="label-row">Certificate name</span>
+              <input name="certificate" value="client.crt_0" required />
+            </label>
+            <label>
+              <span class="label-row">DNS hint (peer)</span>
+              <input name="dnsHint" value="172.29.0.1" />
+              <span class="field-hint">Ожидаемый DNS AntiZapret (для подсказки). Реальный DNS берётся с OVPN peer.</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>MikroTik</legend>
+          <div class="wan-switch" role="radiogroup" aria-label="Тип WAN">
+            <p class="wan-switch-title">Тип подключения к провайдеру</p>
+            <div class="wan-switch-track">
+              <button type="button" class="wan-btn active" data-wan="dhcp" role="radio" aria-checked="true">
+                <strong>DHCP / кабель</strong>
+                <span>обычно ether1</span>
+              </button>
+              <button type="button" class="wan-btn" data-wan="pppoe" role="radio" aria-checked="false">
+                <strong>PPPoE</strong>
+                <span>логин провайдера</span>
+              </button>
+            </div>
+            <p class="field-hint block-hint" id="wanHint">
+              Укажите интерфейс с DHCP. Скрипт выключит <code>use-peer-dns</code> у провайдера.
+            </p>
+          </div>
+          <div class="row">
+            <label>
+              <span class="label-row">LAN</span>
+              <input name="lanNetwork" value="192.168.88.0/24" required />
+            </label>
+            <label>
+              <span class="label-row">WAN interface</span>
+              <input name="wanInterface" id="wanInterface" value="ether1" required />
+              <div class="presets wan-presets" role="group">
+                <button type="button" class="chip wan-chip active" data-wan-if="ether1">ether1</button>
+                <button type="button" class="chip wan-chip" data-wan-if="pppoe-out1">pppoe-out1</button>
+              </div>
+            </label>
+          </div>
+          <div class="row">
+            <label>
+              <span class="label-row">DNS fallback</span>
+              <input name="defaultDns" value="8.8.8.8" required />
+              <span class="field-hint">DNS при падении OVPN (On Down).</span>
+            </label>
+            <label>
+              <span class="label-row">OVPN name</span>
+              <input name="ovpnName" value="ovpn-out1" required />
+            </label>
+          </div>
+          <div class="row">
+            <label>
+              <span class="label-row">PPP profile</span>
+              <input name="profileName" value="VPN_PROFILE" required />
+            </label>
+            <label>
+              <span class="label-row">TLS version</span>
+              <input name="tlsVersion" value="any" />
+            </label>
+          </div>
+        </fieldset>
+      </form>
+    </section>
+
+    <section class="panel certs-panel">
+      <div class="panel-head">
+        <h2><span class="step" aria-hidden="true">3</span> Сертификаты</h2>
+        <div class="actions">
+          <button type="button" class="ghost" id="btnDlCa" disabled>ca.crt</button>
+          <button type="button" class="ghost" id="btnDlCert" disabled>client.crt</button>
+          <button type="button" class="primary" id="btnDlKey" disabled>client.key</button>
+        </div>
+      </div>
+      <p class="field-hint block-hint" id="certsStatus">После разбора .ovpn здесь появятся кнопки скачивания. Загрузите файлы в Files на MikroTik и выполните Import в System → Certificates.</p>
+    </section>
+
+    <section class="panel out-panel">
+      <div class="panel-head">
+        <h2><span class="step" aria-hidden="true">4</span> Готовый .rsc</h2>
+        <div class="actions">
+          <button type="button" class="ghost" id="btnCopy">Копировать</button>
+          <button type="button" class="primary" id="btnDownload">Скачать .rsc</button>
+        </div>
+      </div>
+      <pre id="preview" class="preview" aria-live="polite">Заполните поля или вставьте *.ovpn…</pre>
+      <ol class="steps">
+        <li>Скачайте <code>ca.crt</code>, <code>client.crt</code>, <code>client.key</code> и загрузите в Files</li>
+        <li>Импортируйте сертификаты (System → Certificates → Import)</li>
+        <li>Проверьте имя сертификата в поле выше (часто <code>client.crt_0</code>)</li>
+        <li>Скачайте <code>az-ovpn-ready.rsc</code> и: <code>/import file-name=az-ovpn-ready.rsc</code></li>
+        <li>Маршруты подтянутся с сервера OpenVPN; после обновления AntiZapret — переподключите OVPN</li>
+      </ol>
+      <p class="hint">
+        WireGuard-вариант гайда:
+        <a href="https://github.com/Kirito0098/AntiZapret-WG-Mikrotik">AntiZapret-WG-Mikrotik</a>
+      </p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <a href="https://github.com/Kirito0098/AntiZapret-OpenVPN-Mikrotik">Репозиторий</a>
+    ·
+    <a href="https://github.com/GubernievS/AntiZapret-VPN">AntiZapret-VPN</a>
+    ·
+    <a href="https://github.com/Kirito0098/AntiZapret-OpenVPN-Mikrotik#readme">Инструкция</a>
+  </footer>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+# Пример клиентского OpenVPN AntiZapret (плейсхолдеры — без реальных ключей)
+# Реальный файл: /root/antizapret/client/*-udp.ovpn или *-tcp.ovpn
+#
+# Порты: 50080 / 50443 (резерв 80, 443, 504, 508)
+# DNS: UDP *.29.0.1 · TCP *.29.4.1
+
+client
+dev tun
+proto udp
+remote vpn.example.com 50080
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+remote-cert-tls server
+cipher AES-128-GCM
+auth SHA1
+verb 3
+user antizapret-client
+
+<ca>
+-----BEGIN CERTIFICATE-----
+...ВСТАВЬТЕ_CA...
+-----END CERTIFICATE-----
+</ca>
+
+<cert>
+-----BEGIN CERTIFICATE-----
+...ВСТАВЬТЕ_CLIENT_CERT...
+-----END CERTIFICATE-----
+</cert>
+
+<key>
+-----BEGIN PRIVATE KEY-----
+...ВСТАВЬТЕ_CLIENT_KEY...
+-----END PRIVATE KEY-----
+</key>

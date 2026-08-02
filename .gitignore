@@ -1,0 +1,10 @@
+# Личные данные — не публиковать
+*.ovpn
+!examples/client.ovpn.example
+*.crt
+*.key
+config.rsc
+
+# Заполненные переменные пользователя
+fill/az-ovpn-vars.rsc
+az-ovpn-vars.rsc
