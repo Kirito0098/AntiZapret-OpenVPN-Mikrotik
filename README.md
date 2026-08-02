@@ -1,7 +1,9 @@
-# 🚀 AntiZapret OpenVPN → MikroTik
+# 🚀 AntiZapret OpenVPN на MikroTik
 
-> Инструкция и **онлайн-генератор** для подключения MikroTik (RouterOS 7) к [AntiZapret-VPN](https://github.com/GubernievS/AntiZapret-VPN) через OpenVPN.  
-> Скриншоты WinBox сохранены; команды и порты приведены к актуальным артефактам сервера.
+> Инструкция по подключению MikroTik к **[AntiZapret-VPN](https://github.com/GubernievS/AntiZapret-VPN)** через OpenVPN.  
+> Шаги с пояснениями и скриншотами WinBox + онлайн-генератор конфига.
+
+Рекомендуется **RouterOS 7.x**. Для WireGuard смотрите [AntiZapret-WG-Mikrotik](https://github.com/Kirito0098/AntiZapret-WG-Mikrotik).
 
 ---
 
@@ -13,58 +15,58 @@
 - [1️⃣ Подготовка сертификатов](#1️⃣-подготовка-сертификатов)
 - [2️⃣ PPP-профиль (On Up / On Down)](#2️⃣-ppp-профиль-on-up--on-down)
 - [3️⃣ OpenVPN-клиент](#3️⃣-openvpn-клиент)
-- [4️⃣ Маскарадинг](#4️⃣-маскарадинг)
+- [4️⃣ Masquerade](#4️⃣-masquerade)
 - [5️⃣ DNS](#5️⃣-dns)
 - [6️⃣ WAN: DHCP или PPPoE](#6️⃣-wan-dhcp-или-pppoe)
 - [7️⃣ Проверка](#7️⃣-проверка)
 - [Автоустановка fill/](#автоустановка-fill)
 - [Полезные советы](#-полезные-советы)
-- [Ссылки](#ссылки)
 
 ---
 
 ### Онлайн-генератор (GitHub Pages)
 
-Откройте **[генератор](https://kirito0098.github.io/AntiZapret-OpenVPN-Mikrotik/)** → вставьте `*.ovpn` → скачайте `ca.crt` / `client.crt` / `client.key` и `az-ovpn-ready.rsc` → загрузите на MikroTik → импортируйте сертификаты → `/import file-name=az-ovpn-ready.rsc`.
+Откройте **[генератор конфига](https://kirito0098.github.io/AntiZapret-OpenVPN-Mikrotik/)** → вставьте `*.ovpn` → скачайте `ca.crt` / `client.crt` / `client.key` и `az-ovpn-ready.rsc` → загрузите в Files → импортируйте сертификаты → `/import file-name=az-ovpn-ready.rsc`.
 
-Сертификаты и пароль обрабатываются **только в браузере**.
+Ключи обрабатываются **только в браузере**.
 
 ---
 
 ## 📦 Что понадобится
 
 - Роутер MikroTik с **RouterOS 7.x**
-- Файлы с сервера AntiZapret: `/root/antizapret/client/` — `antizapret-*-udp.ovpn` (рекомендуется) или `*-tcp.ovpn`
-- Доступ WinBox / Terminal
-- Для обхода блокировок протокола на сервере: патч OpenVPN UDP; для MikroTik часто удобен режим **Error-free** в setup AntiZapret
-
-> Нужен WireGuard вместо OpenVPN? → [AntiZapret-WG-Mikrotik](https://github.com/Kirito0098/AntiZapret-WG-Mikrotik)
+- WinBox / WebFig / Terminal
+- Клиентский файл с сервера AntiZapret:  
+  `/root/antizapret/client/` → лучше **`*-udp.ovpn`** (также есть `*-tcp.ovpn`)
+- На сервере AntiZapret для MikroTik часто ставят патч OpenVPN **Error-free** (см. setup AntiZapret-VPN)
 
 ---
 
-## 📡 Схемы IP и порты
+## 🔢 Схемы IP и порты
 
 | | OpenVPN UDP | OpenVPN TCP |
 |--|-------------|-------------|
-| Типичный DNS / шлюз | `10.29.0.1` или `172.29.0.1` | `10.29.4.1` или `172.29.4.1` |
-| Основные порты | **50080**, **50443** | те же |
-| Резервные порты | 80, 443, 504, 508 | те же |
+| Клиент / DNS (схема `10…`) | `10.29.0.x` / `10.29.0.1` | `10.29.4.x` / `10.29.4.1` |
+| Клиент / DNS (схема `172…`) | `172.29.0.x` / `172.29.0.1` | `172.29.4.x` / `172.29.4.1` |
 
-- Схема **10…** — клиенты по умолчанию AntiZapret  
-- Схема **172…** — альтернативные клиенты  
-- Cipher по умолчанию: **AES-128-GCM** (`aes128-gcm` на MikroTik); без AES-NI попробуйте CHACHA20-POLY1305  
+**Порты:** основные **50080** и **50443**; резерв **80**, **443**, **504**, **508**.
 
-**Маршруты:** сервер пушит их через OpenVPN (CCD `DEFAULT`). Отдельного `mikrotik-openvpn-routes.txt` нет. После обновления списков AntiZapret на сервере достаточно **переподключить** OVPN-клиент на роутере.
+**Маршруты:** сервер пушит их через OpenVPN CCD (`route-nopull=no` на клиенте).  
+Отдельного `mikrotik-openvpn-routes.txt` нет (в отличие от WireGuard).  
+После обновления списков AntiZapret на сервере — **переподключите** OVPN-клиент на MikroTik.
+
+**Шифрование:** по умолчанию AES-128-GCM → на MikroTik `cipher=aes128-gcm`. Без AES-NI попробуйте `chacha20-poly1305`.
 
 ---
 
 ## 1️⃣ Подготовка сертификатов
 
-### Вариант A — из `.ovpn` (или генератор)
+### Вариант A — генератор / извлечение из `.ovpn`
 
-1. Блоки `<ca>`, `<cert>`, `<key>` → файлы `ca.crt`, `client.crt`, `client.key` (генератор делает это кнопками).
+1. В [генераторе](https://kirito0098.github.io/AntiZapret-OpenVPN-Mikrotik/) вставьте `.ovpn` и скачайте `ca.crt`, `client.crt`, `client.key`  
+   **или** вырежьте блоки `<ca>`, `<cert>`, `<key>` вручную.
 2. **Files → Upload** на MikroTik.
-3. **System → Certificates → Import** (по очереди CA, cert, key) или:
+3. **System → Certificates → Import** (по очереди: CA, cert, key):
 
 ```mikrotik
 /certificate import file-name=ca.crt
@@ -72,11 +74,11 @@
 /certificate import file-name=client.key
 ```
 
-Убедитесь, что CA **trusted**, запомните имя клиентского сертификата (часто `client.crt_0`).
+Проверьте, что у CA **trusted = yes**. Имя клиентского сертификата часто `client.crt_0` — его укажите в OVPN Client / генераторе.
 
 ### Вариант B — PPP → Import .ovpn
 
-Загрузите `.ovpn` в Files → **PPP → Import .ovpn**.
+Загрузите весь `.ovpn` в Files → **PPP → Import .ovpn**. Сертификаты и часть настроек появятся сами; профиль и NAT всё равно проверьте по инструкции ниже.
 
 ![Загрузка сертификатов в Files](screenshot/WinBox_O7tKKLxq7T.png)
 *Files → Upload и System → Certificates → Import*
@@ -85,30 +87,27 @@
 
 ## 2️⃣ PPP-профиль (On Up / On Down)
 
-Профиль задаёт скрипты при поднятии/падении туннеля.
+Создайте профиль, например `VPN_PROFILE`.
 
-### Один VPN (только AntiZapret)
+### Один VPN (только AntiZapret) — рекомендуется
 
-**On Up:**
-
-```
-/ip dns cache flush;
-```
-
-**On Down:**
-
-```
-/ip dns cache flush;
-/ip dns set servers=8.8.8.8
-```
+- **On Up:**
+  ```
+  /ip dns cache flush;
+  ```
+- **On Down:**
+  ```
+  /ip dns cache flush;
+  /ip dns set servers=8.8.8.8
+  ```
 
 Готовые тексты: [`scripts/ovpn-monitor-up.rsc`](scripts/ovpn-monitor-up.rsc), [`scripts/ovpn-monitor-down.rsc`](scripts/ovpn-monitor-down.rsc).
 
+DNS AntiZapret приходит с OVPN (`use-peer-dns=yes` на клиенте) — не дублируйте жёсткий DNS в On Up.
+
 ### Несколько VPN
 
-On Up добавляет Redirect DNS; On Down снимает его. См. `scripts/ovpn-monitor-*-multi.rsc` и режим «Несколько VPN» в генераторе.
-
-Дополнительно mangle (LAN → OVPN):
+Нужны Redirect DNS + mangle. Скрипты: [`scripts/ovpn-monitor-up-multi.rsc`](scripts/ovpn-monitor-up-multi.rsc), [`scripts/ovpn-monitor-down-multi.rsc`](scripts/ovpn-monitor-down-multi.rsc).
 
 ```mikrotik
 /ip firewall mangle add chain=postrouting src-address=192.168.88.0/24 \
@@ -117,30 +116,30 @@ On Up добавляет Redirect DNS; On Down снимает его. См. `scr
 ```
 
 ![PPP Profiles и On Up/On Down](screenshot/WinBox_NlGBITlPFB.png)
-*PPP → Profiles → On Up / On Down*
+*PPP → Profiles → Add и вкладки On Up/On Down*
 
 ---
 
 ## 3️⃣ OpenVPN-клиент
 
-**WinBox:** Interfaces → OVPN Client → Add:
+**Interfaces → OVPN Client → Add:**
 
 | Поле | Значение |
 |------|----------|
 | Connect To | хост из `remote` |
-| Port | 50080 / 50443 / резерв |
+| Port | из `.ovpn` (часто 50080) |
 | Mode | ip |
 | Protocol | **udp** (предпочтительно) или tcp |
-| User / Password | из профиля сервера |
+| User / Password | из `.ovpn` |
 | Profile | `VPN_PROFILE` |
-| Certificate | `client.crt_0` (ваше имя) |
+| Certificate | имя после Import |
 | Verify Server Certificate | yes |
 | TLS Version | any |
-| Auth | null (часто при GCM) |
-| Cipher | aes128-gcm |
+| Auth | часто `null` при GCM |
+| Cipher | `aes128-gcm` |
 | Use Peer DNS | **yes** |
 | Add Default Route | **no** |
-| Route No Pull | **no** (маршруты с сервера) |
+| Route No Pull | **no** (тянуть маршруты AntiZapret) |
 
 ```mikrotik
 /interface ovpn-client add name=ovpn-out1 connect-to=vpn.example.com port=50080 mode=ip \
@@ -154,7 +153,9 @@ On Up добавляет Redirect DNS; On Down снимает его. См. `scr
 
 ---
 
-## 4️⃣ Маскарадинг
+## 4️⃣ Masquerade
+
+Чтобы LAN ходила в интернет через VPN:
 
 ```mikrotik
 /ip firewall nat add chain=srcnat action=masquerade out-interface=ovpn-out1 comment="Masquerade VPN"
@@ -167,13 +168,11 @@ On Up добавляет Redirect DNS; On Down снимает его. См. `scr
 
 ## 5️⃣ DNS
 
-Разрешите роутеру отвечать LAN:
+Разрешите роутеру отвечать клиентам LAN:
 
 ```mikrotik
 /ip dns set allow-remote-requests=yes
 ```
-
-DNS AntiZapret приходит с OVPN (`use-peer-dns=yes`). Не дублируйте жёсткий DNS в On Up в режиме одного VPN.
 
 ![DNS Allow Remote Requests](screenshot/WinBox_hLyiGo2JIy.png)
 *IP → DNS*
@@ -184,7 +183,7 @@ DNS AntiZapret приходит с OVPN (`use-peer-dns=yes`). Не дублир�
 
 Отключите DNS провайдера, иначе он перебьёт AntiZapret.
 
-### DHCP / кабель (`ether1`)
+### DHCP / кабель (часто `ether1`)
 
 ```mikrotik
 /ip dhcp-client set [find interface=ether1] use-peer-dns=no
@@ -192,17 +191,17 @@ DNS AntiZapret приходит с OVPN (`use-peer-dns=yes`). Не дублир�
 
 ### PPPoE
 
-Указывайте имя **PPPoE-клиента** (`pppoe-out1`), не физический `ether1`:
+Укажите **имя PPPoE-клиента** (`pppoe-out1`), не физический `ether1`:
 
 ```mikrotik
 /interface pppoe-client set [find name=pppoe-out1] use-peer-dns=no
 /interface list member add list=WAN interface=pppoe-out1
 ```
 
-(Автоустановщик / генератор добавят член списка WAN, если его ещё нет.)
+(Автоустановщик / генератор добавят член WAN, если его ещё нет.)
 
 ![DHCP Client Add](screenshot/WinBox_WfS4CCVDPU.png)
-*IP → DHCP Client (для варианта DHCP)*
+*IP → DHCP Client (вариант DHCP)*
 
 ---
 
@@ -210,19 +209,25 @@ DNS AntiZapret приходит с OVPN (`use-peer-dns=yes`). Не дублир�
 
 ```mikrotik
 /interface ovpn-client print
-/ip route print
-/ip dns print
 ```
 
-Статус интерфейса должен быть **R** (running). С LAN проверьте IP (2ip.ru и т.п.) — для доменов AntiZapret трафик пойдёт через OVPN.
+Статус **R** (running) — туннель поднят. Проверьте IP на 2ip.ru с устройства в LAN.
+
+```mikrotik
+/ip route print
+/log print
+```
+
+После обновления списков на сервере AntiZapret: отключите/включите OVPN-клиент (reconnect), чтобы подтянуть новые маршруты.
 
 ---
 
-## Автоустановка fill/
+## Автоустановка (`fill/`)
 
-1. Извлеките сертификаты, импортируйте на роутер  
-2. Скопируйте [`fill/az-ovpn-vars.rsc.example`](fill/az-ovpn-vars.rsc.example) → `az-ovpn-vars.rsc`, заполните  
-3. Загрузите вместе с [`fill/az-ovpn-install.rsc`](fill/az-ovpn-install.rsc)  
+1. Импортируйте сертификаты (см. §1).
+2. Скопируйте [`fill/az-ovpn-vars.rsc.example`](fill/az-ovpn-vars.rsc.example) → `az-ovpn-vars.rsc`, заполните.
+3. Загрузите вместе с [`fill/az-ovpn-install.rsc`](fill/az-ovpn-install.rsc).
+4. Терминал:
 
 ```mikrotik
 /import file-name=az-ovpn-vars.rsc
@@ -235,16 +240,11 @@ DNS AntiZapret приходит с OVPN (`use-peer-dns=yes`). Не дублир�
 
 ## 💡 Полезные советы
 
-- Не поднимается: сертификаты trusted? порт/proto совпадают с `.ovpn`? на сервере патч UDP / Error-free для MikroTik?
-- Нет обхода: маршруты приходят с сервера — переподключите OVPN после обновления списков AntiZapret; проверьте `use-peer-dns=yes` и что WAN peer-dns выключен
-- MTU/TCPMSS: в профиле `change-tcp-mss=yes`; при обрывах уменьшите MTU на сервере/клиенте
+- Не подключается: сертификаты trusted? порт/proto? имя `certificate` совпадает с Certificates?
+- Нет интернета через VPN: есть ли Masquerade на `ovpn-out1`? `route-nopull=no`?
+- DNS «ломается»: на WAN `use-peer-dns=no`; на OVPN `use-peer-dns=yes`
+- MTU / FastTrack: при обрывах попробуйте clamp MSS в профиле (`change-tcp-mss=yes`) или временно отключить FastTrack
 - Не публикуйте `.ovpn`, `.crt`, `.key` в git (см. `.gitignore`)
 
----
-
-## Ссылки
-
-- [Онлайн-генератор](https://kirito0098.github.io/AntiZapret-OpenVPN-Mikrotik/)
-- [GubernievS/AntiZapret-VPN](https://github.com/GubernievS/AntiZapret-VPN)
-- [AntiZapret-WG-Mikrotik](https://github.com/Kirito0098/AntiZapret-WG-Mikrotik)
-- [MikroTik OpenVPN](https://help.mikrotik.com/docs/display/ROS/OpenVPN)
+> Сервер и клиенты: [GubernievS/AntiZapret-VPN](https://github.com/GubernievS/AntiZapret-VPN)  
+> WireGuard на MikroTik: [AntiZapret-WG-Mikrotik](https://github.com/Kirito0098/AntiZapret-WG-Mikrotik)
